@@ -158,7 +158,7 @@ const App = (props: any) => {
   return (
     <div>
       <nav className="navbar navbar-expand-lg navbar-dark fixed-top"
-        style={{ backgroundColor: 'rgb(204, 10, 33)', top: navTop === 0 ? '' : navTop + 'px' }}>
+        style={{ backgroundColor: 'rgb(0,0,0)', top: navTop === 0 ? '' : navTop + 'px' }}>
         <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
           aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
@@ -233,7 +233,7 @@ const App = (props: any) => {
 
       </div>
       <footer className="no-print page-footer font-small text-white pt-4"
-        style={{ backgroundColor: 'rgb(211, 49, 21)' }}>
+        style={{ backgroundColor: 'rgb(0,0,0)' }}>
         <div className="container-fluid container-xl text-center text-md-left mt-2 mb-3">
           <div className="row">
             <div className="col-md-6 mt-md-0 mt-3">
@@ -267,7 +267,7 @@ const App = (props: any) => {
           </div>
         </div>
         <div className="footer-copyright text-center mt-5 py-2 text-white small"
-          style={{ backgroundColor: 'rgb(204, 10, 33)' }}>
+          style={{ backgroundColor: 'rgb(0,0,0)' }}>
           MIT © Daryl Buckle 2020
         </div>
       </footer>
