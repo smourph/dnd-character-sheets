@@ -1,9 +1,21 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('mount and unmount without crashing', async () => {
+  const div = document.createElement('div');
+  const root = ReactDOM.createRoot(div);
+
+  await waitFor(() => {
+    root.render(<Router><App /></Router>);
+    root.unmount();
+  });
+});
+
+test('render any element', () => {
+  render(<Router><App /></Router>);
+  const anyElement = screen.getByText(/Character Name/i);
+  expect(anyElement).toBeInTheDocument();
 });
