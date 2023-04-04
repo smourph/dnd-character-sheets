@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/dnd-character-sheets/static/css/main.ae1c9691.css",
+    "main.js": "/dnd-character-sheets/static/js/main.49396349.js",
+    "index.html": "/dnd-character-sheets/index.html",
+    "main.ae1c9691.css.map": "/dnd-character-sheets/static/css/main.ae1c9691.css.map",
+    "main.49396349.js.map": "/dnd-character-sheets/static/js/main.49396349.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ae1c9691.css",
+    "static/js/main.49396349.js"
+  ]
+}
