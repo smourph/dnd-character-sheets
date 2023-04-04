@@ -16,6 +16,6 @@ test('mount and unmount without crashing', async () => {
 
 test('render any element', () => {
   render(<Router><App /></Router>);
-  const anyElement = screen.getByText(/Character Name/i);
-  expect(anyElement).toBeInTheDocument();
+  const anyElement = screen.getAllByText(/Character Name/i);
+  expect(anyElement[0]).toBeInTheDocument();
 });

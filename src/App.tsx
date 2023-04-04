@@ -147,10 +147,10 @@ const App = (props: any) => {
   }
 
   function getDefaultRedirect(search: string | undefined) {
-    let defaultRedirect = '/stats' + search;
+    let defaultRedirect = '/all' + search;
     if (window.innerWidth < 992) {
       // is mobile device
-      defaultRedirect = '/all' + search;
+      defaultRedirect = '/stats' + search;
     }
     return defaultRedirect;
   }
@@ -167,6 +167,10 @@ const App = (props: any) => {
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             <ul className="navbar-nav ml-lg-5" data-toggle="collapse" data-target=".navbar-collapse.show">
               <li className="nav-item mr-lg-3">
+                <Link className={props.location.pathname === '/all' ? 'nav-link active' : 'nav-link'}
+                  to="/all">All</Link>
+              </li>
+              <li className="nav-item mr-lg-3">
                 <Link className={props.location.pathname === '/stats' ? 'nav-link active' : 'nav-link'}
                   to="/stats">Stats</Link>
               </li>
@@ -177,10 +181,6 @@ const App = (props: any) => {
               <li className="nav-item mr-lg-3">
                 <Link className={props.location.pathname === '/spells' ? 'nav-link active' : 'nav-link'}
                   to="/spells">Spells</Link>
-              </li>
-              <li className="nav-item mr-lg-3">
-                <Link className={props.location.pathname === '/all' ? 'nav-link active' : 'nav-link'}
-                  to="/all">All</Link>
               </li>
             </ul>
 
@@ -206,6 +206,16 @@ const App = (props: any) => {
             <ScrollToTop />
             <Redirect to={getDefaultRedirect(search)} />
           </Route>
+          <Route exact path="/all">
+            <ScrollToTop />
+            {statsSheet}
+            <div className="page-break" />
+            <div className="page-space" />
+            {profileSheet}
+            <div className="page-break" />
+            <div className="page-space" />
+            {spellSheet}
+          </Route>
           <Route exact path="/stats">
             <ScrollToTop />
             {statsSheet}
@@ -216,16 +226,6 @@ const App = (props: any) => {
           </Route>
           <Route exact path="/spells">
             <ScrollToTop />
-            {spellSheet}
-          </Route>
-          <Route exact path="/all">
-            <ScrollToTop />
-            {statsSheet}
-            <div className="page-break" />
-            <div className="page-space" />
-            {profileSheet}
-            <div className="page-break" />
-            <div className="page-space" />
             {spellSheet}
           </Route>
         </Switch>
