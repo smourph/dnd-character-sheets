@@ -1,6 +1,12 @@
 {
   "name": "dnd-character-sheets",
   "version": "0.1.0",
+  "description": "Dungeons and Dragons 5th Edition character sheets in React.",
+  "author": "Julien De Conti <julien.de.conti@gmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/smourph/dnd-character-sheets/issues"
+  },
   "homepage": "https://smourph.github.io/dnd-character-sheets",
   "private": true,
   "dependencies": {
@@ -52,5 +58,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smourph/dnd-character-sheets.git"
   }
 }
