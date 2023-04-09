@@ -22,71 +22,68 @@ function ScrollToTop() {
 }
 
 const App = (props: any) => {
-  const [character, setCharacter] = useState<DnDCharacter>(loadDefaultCharacter());
+  const [character, setCharacter] = useState<DnDCharacter>(getDefaultCharacter());
   const [navTop, setNavTop] = useState<number>(0);
-  const [prevScrollpos, setPrevScrollpos] = useState<number>(window.pageYOffset);
-  const [, setLoading] = useState<boolean>(false);
+  const [prevScrollPos, setPrevScrollPos] = useState<number>(window.scrollY);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const { search } = useLocation();
+
   useEffect(() => {
     const characterToLoad = qs.parse(search, { ignoreQueryPrefix: true }).character;
-    if (characterToLoad) {
-      setLoading(true);
-      axios
-        .get('characters/' + characterToLoad + '.json')
-        .then((response: any) => {
-          setLoading(false);
-          try {
-            if (!Array.isArray(response.data) && typeof response.data === 'object') {
-              console.log('Loaded Character - ' + characterToLoad);
-              updateCharacter(response.data);
-            } else {
-              throw new Error('Json file does not contain a DnD character.');
-            }
-          } catch {
-            throw new Error('Json file does not contain a DnD character.');
-          }
-        })
-        .catch((error: any) => {
-          console.log('Failed to load Character - ' + characterToLoad);
-          console.log(error);
-          setLoading(false);
-        });
+    if (!characterToLoad) {
+      return;
     }
+
+    setLoading(true);
+    axios
+      .get('characters/' + characterToLoad + '.json')
+      .then((response: any) => {
+        if (Array.isArray(response.data) || typeof response.data !== 'object') {
+          throw new Error('Json file does not contain a DnD character.');
+        }
+        console.log('Loaded Character - ' + characterToLoad);
+        updateAndSaveCharacter(response.data);
+      })
+      .catch((error: any) => {
+        console.log('Failed to load Character - ' + characterToLoad);
+        console.log(error);
+      })
+      .finally(() => setLoading(false));
   }, [search]);
 
   const statsSheet = (
     <DnDCharacterStatsSheet
       character={character}
-      onCharacterChanged={updateCharacter}
+      onCharacterChanged={updateAndSaveCharacter}
     />
   );
   const profileSheet = (
     <DnDCharacterProfileSheet
       character={character}
-      onCharacterChanged={updateCharacter}
+      onCharacterChanged={updateAndSaveCharacter}
     />
   );
   const spellSheet = (
     <DnDCharacterSpellSheet
       character={character}
-      onCharacterChanged={updateCharacter}
+      onCharacterChanged={updateAndSaveCharacter}
     />
   );
 
   window.onscroll = function () {onScroll();};
 
   function onScroll() {
-    var currentScrollPos = window.pageYOffset;
-    if (prevScrollpos > currentScrollPos || currentScrollPos < 20) {
+    const currentScrollPos = window.scrollY;
+    if (prevScrollPos > currentScrollPos || currentScrollPos < 20) {
       setNavTop(0);
     } else {
       setNavTop(-280);
     }
-    setPrevScrollpos(currentScrollPos);
+    setPrevScrollPos(currentScrollPos);
   }
 
-  function loadDefaultCharacter() {
+  function getDefaultCharacter() {
     let character: DnDCharacter = {};
     const lsData = localStorage.getItem('dnd-character-data');
     if (lsData) {
@@ -98,7 +95,7 @@ const App = (props: any) => {
     return character;
   }
 
-  function updateCharacter(character: DnDCharacter) {
+  function updateAndSaveCharacter(character: DnDCharacter) {
     setCharacter(character);
     localStorage.setItem('dnd-character-data', JSON.stringify(character));
   }
@@ -106,21 +103,20 @@ const App = (props: any) => {
   function exportCharacter() {
     const json = JSON.stringify(character, null, 2);
 
-    var a = document.createElement('a');
-    var file = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    const file = new Blob([json], { type: 'application/json' });
     a.href = URL.createObjectURL(file);
     a.download = character.name ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json' : 'dnd-character.json';
     a.click();
   }
 
-
   function importCharacter(event: any) {
     if (event.target.files.length > 0) {
-      var fr = new FileReader();
+      const fr = new FileReader();
 
       fr.onload = function (e) {
         if (e.target && e.target.result && typeof e.target.result === 'string') {
-          loadCharacter(e.target.result);
+          loadCharacterFromJson(e.target.result);
         }
       };
 
@@ -129,11 +125,11 @@ const App = (props: any) => {
     }
   }
 
-  function loadCharacter(json: string) {
+  function loadCharacterFromJson(json: string) {
     try {
-      var result = JSON.parse(typeof json === 'string' ? json : '{}');
+      const result = JSON.parse(json);
       if (!Array.isArray(result) && typeof result === 'object') {
-        updateCharacter(result);
+        updateAndSaveCharacter(result);
       } else {
         window.alert('Json file does not contain a DnD character.');
       }
@@ -143,7 +139,7 @@ const App = (props: any) => {
   }
 
   function clearCharacter() {
-    updateCharacter({});
+    updateAndSaveCharacter({});
   }
 
   function getDefaultRedirect(search: string | undefined) {
@@ -201,35 +197,36 @@ const App = (props: any) => {
       </nav>
       <div className="app-holder">
 
-        <Switch>
-          <Route exact path="/">
-            <ScrollToTop />
-            <Redirect to={getDefaultRedirect(search)} />
-          </Route>
-          <Route exact path="/all">
-            <ScrollToTop />
-            {statsSheet}
-            <div className="page-break" />
-            <div className="page-space" />
-            {profileSheet}
-            <div className="page-break" />
-            <div className="page-space" />
-            {spellSheet}
-          </Route>
-          <Route exact path="/stats">
-            <ScrollToTop />
-            {statsSheet}
-          </Route>
-          <Route exact path="/profile">
-            <ScrollToTop />
-            {profileSheet}
-          </Route>
-          <Route exact path="/spells">
-            <ScrollToTop />
-            {spellSheet}
-          </Route>
-        </Switch>
-
+        {!loading &&
+          <Switch>
+            <Route exact path="/">
+              <ScrollToTop />
+              <Redirect to={getDefaultRedirect(search)} />
+            </Route>
+            <Route exact path="/all">
+              <ScrollToTop />
+              {statsSheet}
+              <div className="page-break" />
+              <div className="page-space" />
+              {profileSheet}
+              <div className="page-break" />
+              <div className="page-space" />
+              {spellSheet}
+            </Route>
+            <Route exact path="/stats">
+              <ScrollToTop />
+              {statsSheet}
+            </Route>
+            <Route exact path="/profile">
+              <ScrollToTop />
+              {profileSheet}
+            </Route>
+            <Route exact path="/spells">
+              <ScrollToTop />
+              {spellSheet}
+            </Route>
+          </Switch>
+        }
 
       </div>
       <footer className="no-print page-footer font-small text-white pt-4"
