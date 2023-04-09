@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link, Redirect, Route, Switch, useLocation, withRouter } from 'react-router-dom';
 import axios from 'axios';
 import qs from 'qs';
-
 import {
   DnDCharacter,
   DnDCharacterProfileSheet,
   DnDCharacterSpellSheet,
   DnDCharacterStatsSheet
 } from 'dnd-character-sheets';
+
 import 'dnd-character-sheets/dist/index.css';
 
 function ScrollToTop() {
@@ -29,59 +29,24 @@ const App = (props: any) => {
 
   const { search } = useLocation();
 
-  useEffect(() => {
-    const characterToLoad = qs.parse(search, { ignoreQueryPrefix: true }).character;
-    if (!characterToLoad) {
-      return;
-    }
-
-    setLoading(true);
-    axios
-      .get('characters/' + characterToLoad + '.json')
-      .then((response: any) => {
-        if (Array.isArray(response.data) || typeof response.data !== 'object') {
-          throw new Error('Json file does not contain a DnD character.');
-        }
-        console.log('Loaded Character - ' + characterToLoad);
-        updateAndSaveCharacter(response.data);
-      })
-      .catch((error: any) => {
-        console.log('Failed to load Character - ' + characterToLoad);
-        console.log(error);
-      })
-      .finally(() => setLoading(false));
-  }, [search]);
-
   const statsSheet = (
     <DnDCharacterStatsSheet
       character={character}
-      onCharacterChanged={updateAndSaveCharacter}
+      onCharacterChanged={updateCharacter}
     />
   );
   const profileSheet = (
     <DnDCharacterProfileSheet
       character={character}
-      onCharacterChanged={updateAndSaveCharacter}
+      onCharacterChanged={updateCharacter}
     />
   );
   const spellSheet = (
     <DnDCharacterSpellSheet
       character={character}
-      onCharacterChanged={updateAndSaveCharacter}
+      onCharacterChanged={updateCharacter}
     />
   );
-
-  window.onscroll = function () {onScroll();};
-
-  function onScroll() {
-    const currentScrollPos = window.scrollY;
-    if (prevScrollPos > currentScrollPos || currentScrollPos < 20) {
-      setNavTop(0);
-    } else {
-      setNavTop(-280);
-    }
-    setPrevScrollPos(currentScrollPos);
-  }
 
   function getDefaultCharacter() {
     let character: DnDCharacter = {};
@@ -95,22 +60,30 @@ const App = (props: any) => {
     return character;
   }
 
-  function updateAndSaveCharacter(character: DnDCharacter) {
+  function updateCharacter(character: DnDCharacter) {
     setCharacter(character);
-    localStorage.setItem('dnd-character-data', JSON.stringify(character));
+    saveCharacterInCache(character);
   }
 
-  function exportCharacter() {
-    const json = JSON.stringify(character, null, 2);
-
-    const a = document.createElement('a');
-    const file = new Blob([json], { type: 'application/json' });
-    a.href = URL.createObjectURL(file);
-    a.download = character.name ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json' : 'dnd-character.json';
-    a.click();
+  function clearCharacter() {
+    setCharacter({});
+    saveCharacterInCache({});
   }
 
-  function importCharacter(event: any) {
+  function loadCharacterFromJson(json: string) {
+    try {
+      const result = JSON.parse(json);
+      if (!Array.isArray(result) && typeof result === 'object') {
+        updateCharacter(result);
+      } else {
+        window.alert('Json file does not contain a DnD character.');
+      }
+    } catch {
+      window.alert('Json file does not contain a DnD character.');
+    }
+  }
+
+  function importCharacterFromFile(event: any) {
     if (event.target.files.length > 0) {
       const fr = new FileReader();
 
@@ -125,21 +98,18 @@ const App = (props: any) => {
     }
   }
 
-  function loadCharacterFromJson(json: string) {
-    try {
-      const result = JSON.parse(json);
-      if (!Array.isArray(result) && typeof result === 'object') {
-        updateAndSaveCharacter(result);
-      } else {
-        window.alert('Json file does not contain a DnD character.');
-      }
-    } catch {
-      window.alert('Json file does not contain a DnD character.');
-    }
+  function saveCharacterInCache(character: DnDCharacter) {
+    localStorage.setItem('dnd-character-data', JSON.stringify(character));
   }
 
-  function clearCharacter() {
-    updateAndSaveCharacter({});
+  function exportCharacter() {
+    const json = JSON.stringify(character, null, 2);
+
+    const a = document.createElement('a');
+    const file = new Blob([json], { type: 'application/json' });
+    a.href = URL.createObjectURL(file);
+    a.download = character.name ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json' : 'dnd-character.json';
+    a.click();
   }
 
   function getDefaultRedirect(search: string | undefined) {
@@ -150,6 +120,41 @@ const App = (props: any) => {
     }
     return defaultRedirect;
   }
+
+  window.onscroll = function () {onScroll();};
+
+  function onScroll() {
+    const currentScrollPos = window.scrollY;
+    if (prevScrollPos > currentScrollPos || currentScrollPos < 20) {
+      setNavTop(0);
+    } else {
+      setNavTop(-280);
+    }
+    setPrevScrollPos(currentScrollPos);
+  }
+
+  useEffect(() => {
+    const characterToLoad = qs.parse(search, { ignoreQueryPrefix: true }).character;
+    if (!characterToLoad) {
+      return;
+    }
+
+    setLoading(true);
+    axios
+      .get('characters/' + characterToLoad + '.json')
+      .then((response: any) => {
+        if (Array.isArray(response.data) || typeof response.data !== 'object') {
+          throw new Error('Json file does not contain a DnD character.');
+        }
+        console.log('Loaded Character - ' + characterToLoad);
+        updateCharacter(response.data);
+      })
+      .catch((error: any) => {
+        console.log('Failed to load Character - ' + characterToLoad);
+        console.log(error);
+      })
+      .finally(() => setLoading(false));
+  }, [search]);
 
   return (
     <div>
@@ -182,12 +187,12 @@ const App = (props: any) => {
 
             <ul className="navbar-nav ml-auto mr-lg-5" data-toggle="collapse" data-target=".navbar-collapse.show">
               <li className="nav-item mr-lg-3">
-                <button className="btn btn-dark" onClick={() => exportCharacter()}>Export</button>
                 <input style={{ display: 'none' }} type="file" id="selectFiles" accept="application/json"
-                  onChange={(e) => importCharacter(e)} />
-                <button className="btn btn-dark"
-                  onClick={() => document.getElementById("selectFiles")?.click()}>Import
+                  onChange={(e) => importCharacterFromFile(e)} />
+                <button className="btn btn-dark" onClick={() => document.getElementById("selectFiles")?.click()}>
+                  Import
                 </button>
+                <button className="btn btn-dark" onClick={() => exportCharacter()}>Export</button>
                 <button className="btn btn-dark" onClick={() => window.print()}>Print</button>
                 <button className="btn btn-danger" onClick={() => clearCharacter()}>Clear</button>
               </li>
