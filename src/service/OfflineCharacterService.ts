@@ -1,4 +1,5 @@
 import CustomDnDCharacter, { CharacterServiceInterface } from './CharacterService.type';
+import { HubdbFindAllElementResponse } from './hubdb.type';
 
 export default class OfflineCharacterService implements CharacterServiceInterface {
 
@@ -12,6 +13,10 @@ export default class OfflineCharacterService implements CharacterServiceInterfac
       counter += 1;
     }
     return result;
+  }
+
+  findAll(): Promise<HubdbFindAllElementResponse[]> {
+    return Promise.resolve([]);
   }
 
   add(_character: CustomDnDCharacter): Promise<string> {

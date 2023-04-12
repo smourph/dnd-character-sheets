@@ -16,7 +16,12 @@ function ScrollToTop() {
   return null;
 }
 
+function concatStringsWithSeparator(strings: Array<string | undefined>, separator: string = ' '): string {
+  return strings.filter(Boolean).join(separator);
+}
+
 const App = (props: any) => {
+  const [importedCharacters, setImportedCharacters] = useState<CustomDnDCharacter[]>([]);
   const [character, setCharacter] = useState<CustomDnDCharacter>(getDefaultCharacter());
   const [navTop, setNavTop] = useState<number>(0);
   const [prevScrollPos, setPrevScrollPos] = useState<number>(window.scrollY);
@@ -81,6 +86,16 @@ const App = (props: any) => {
     }
   }
 
+  function loadCharacterFromDatabase(event: React.ChangeEvent<HTMLSelectElement>) {
+    const id = event.target.value;
+    if (id && id !== '') {
+      const foundCharacter = importedCharacters.find(importedCharacter => importedCharacter.id === id);
+      if (foundCharacter) {
+        updateCharacter(foundCharacter);
+      }
+    }
+  }
+
   function importCharacterFromFile(event: any) {
     if (event.target.files.length > 0) {
       const fr = new FileReader();
@@ -95,6 +110,35 @@ const App = (props: any) => {
       event.target.value = '';
     }
   }
+
+  const importCharactersFromDatabase = () => {
+    setLoading(true);
+    characterService.findAll()
+      .then(response => {
+        if (!Array.isArray(response)) {
+          throw new Error('Database does not contain DnD characters.');
+        }
+
+        const characters = response.map(element => {
+          const char = element.data;
+          char.id = element.path;
+          return char;
+        });
+        setImportedCharacters(characters);
+
+        if (character?.id && character.id !== '') {
+          const foundCharacter = characters.find(character_ => character_.id === character.id);
+          if (foundCharacter) {
+            updateCharacter(foundCharacter);
+          }
+        }
+      })
+      .catch(error => {
+        console.log('Failed to load all character names.');
+        console.log(error);
+      })
+      .finally(() => setLoading(false));
+  };
 
   function saveCharacterInDatabase() {
     setLoading(true);
@@ -143,7 +187,7 @@ const App = (props: any) => {
 
   return (
     <div>
-      <nav className="navbar navbar-expand-lg navbar-dark fixed-top"
+      <nav className="no-print navbar navbar-expand-lg navbar-dark fixed-top"
         style={{ backgroundColor: 'rgb(0,0,0)', top: navTop === 0 ? '' : navTop + 'px' }}>
         <button className="navbar-toggler" type="button" data-toggle="collapse"
           data-target="#navbarSupportedContent"
@@ -185,6 +229,25 @@ const App = (props: any) => {
                 <button disabled={loading} className="btn btn-primary" onClick={() => exportCharacterIntoFile()}>
                   Export
                 </button>
+                <button disabled={loading} className="btn btn-primary" onClick={() => importCharactersFromDatabase()}>
+                  {importedCharacters.length > 0 ? 'Refresh database' : 'Import sheets from online database'}
+                </button>
+                {importedCharacters.length > 0 &&
+                  <select onChange={(event: React.ChangeEvent<HTMLSelectElement>) => loadCharacterFromDatabase(event)}
+                    value={character?.id || ''}>
+                    <option value="">Select character from database</option>
+                    {importedCharacters.map(importedCharacter => {
+                      const element = character?.id === importedCharacter.id ? character : importedCharacter;
+                      return (
+                        <option key={element.id} value={element.id}>
+                          {concatStringsWithSeparator([
+                            element.name,
+                            concatStringsWithSeparator([element.race, element.classLevel])
+                          ], ' | ')}
+                        </option>);
+                    })}
+                  </select>
+                }
                 <button disabled={loading} className="btn btn-primary" onClick={() => saveCharacterInDatabase()}>
                   Save sheet in database
                 </button>

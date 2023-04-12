@@ -1,3 +1,5 @@
+import CustomDnDCharacter from './CharacterService.type';
+
 /**
  * hubdb object
  * @memberof Hubdb
@@ -15,6 +17,11 @@ export interface Hubdb {
   remove: (id: string, callback: Function) => void;
   get: (id: string, callback: Function) => void;
   add: (data: any, callback: Function) => void;
+}
+
+export interface HubdbFindAllElementResponse {
+  path: string;
+  data: CustomDnDCharacter;
 }
 
 /**
