@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Redirect, Route, Switch, useLocation, withRouter } from 'react-router-dom';
-import axios from 'axios';
-import qs from 'qs';
-import {
-  DnDCharacter,
-  DnDCharacterProfileSheet,
-  DnDCharacterSpellSheet,
-  DnDCharacterStatsSheet
-} from 'dnd-character-sheets';
+import { DnDCharacterProfileSheet, DnDCharacterSpellSheet, DnDCharacterStatsSheet } from 'dnd-character-sheets';
+import { characterService } from './service/CharacterService';
+import CustomDnDCharacter from './service/CharacterService.type';
 
 import 'dnd-character-sheets/dist/index.css';
 
@@ -22,12 +17,11 @@ function ScrollToTop() {
 }
 
 const App = (props: any) => {
-  const [character, setCharacter] = useState<DnDCharacter>(getDefaultCharacter());
+  const [character, setCharacter] = useState<CustomDnDCharacter>(getDefaultCharacter());
   const [navTop, setNavTop] = useState<number>(0);
   const [prevScrollPos, setPrevScrollPos] = useState<number>(window.scrollY);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const { search } = useLocation();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const statsSheet = (
     <DnDCharacterStatsSheet
@@ -49,25 +43,29 @@ const App = (props: any) => {
   );
 
   function getDefaultCharacter() {
-    let character: DnDCharacter = {};
+    let character_: CustomDnDCharacter = {};
     const lsData = localStorage.getItem('dnd-character-data');
     if (lsData) {
       try {
-        character = JSON.parse(lsData);
+        character_ = JSON.parse(lsData);
       } catch {
       }
     }
-    return character;
+    return character_;
   }
 
-  function updateCharacter(character: DnDCharacter) {
-    setCharacter(character);
-    saveCharacterInCache(character);
+  function updateCharacter(character_: CustomDnDCharacter) {
+    setCharacter(character_);
+    saveCharacterInCache(character_);
   }
 
   function clearCharacter() {
     setCharacter({});
     saveCharacterInCache({});
+  }
+
+  function saveCharacterInCache(character_: CustomDnDCharacter) {
+    localStorage.setItem('dnd-character-data', JSON.stringify(character_));
   }
 
   function loadCharacterFromJson(json: string) {
@@ -98,11 +96,21 @@ const App = (props: any) => {
     }
   }
 
-  function saveCharacterInCache(character: DnDCharacter) {
-    localStorage.setItem('dnd-character-data', JSON.stringify(character));
+  function saveCharacterInDatabase() {
+    setLoading(true);
+    characterService.add(character)
+      .then(id => {
+        character.id = id;
+        updateCharacter(character);
+      })
+      .catch(error => {
+        console.log('Failed to save character in database');
+        console.log(error);
+      })
+      .finally(() => setLoading(false));
   }
 
-  function exportCharacter() {
+  function exportCharacterIntoFile() {
     const json = JSON.stringify(character, null, 2);
 
     const a = document.createElement('a');
@@ -112,11 +120,11 @@ const App = (props: any) => {
     a.click();
   }
 
-  function getDefaultRedirect(search: string | undefined) {
-    let defaultRedirect = '/all' + search;
+  function getDefaultRedirect() {
+    let defaultRedirect = '/all';
     if (window.innerWidth < 992) {
       // is mobile device
-      defaultRedirect = '/stats' + search;
+      defaultRedirect = '/stats';
     }
     return defaultRedirect;
   }
@@ -133,34 +141,12 @@ const App = (props: any) => {
     setPrevScrollPos(currentScrollPos);
   }
 
-  useEffect(() => {
-    const characterToLoad = qs.parse(search, { ignoreQueryPrefix: true }).character;
-    if (!characterToLoad) {
-      return;
-    }
-
-    setLoading(true);
-    axios
-      .get('characters/' + characterToLoad + '.json')
-      .then((response: any) => {
-        if (Array.isArray(response.data) || typeof response.data !== 'object') {
-          throw new Error('Json file does not contain a DnD character.');
-        }
-        console.log('Loaded Character - ' + characterToLoad);
-        updateCharacter(response.data);
-      })
-      .catch((error: any) => {
-        console.log('Failed to load Character - ' + characterToLoad);
-        console.log(error);
-      })
-      .finally(() => setLoading(false));
-  }, [search]);
-
   return (
     <div>
       <nav className="navbar navbar-expand-lg navbar-dark fixed-top"
         style={{ backgroundColor: 'rgb(0,0,0)', top: navTop === 0 ? '' : navTop + 'px' }}>
-        <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        <button className="navbar-toggler" type="button" data-toggle="collapse"
+          data-target="#navbarSupportedContent"
           aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
@@ -187,14 +173,24 @@ const App = (props: any) => {
 
             <ul className="navbar-nav ml-auto mr-lg-5" data-toggle="collapse" data-target=".navbar-collapse.show">
               <li className="nav-item mr-lg-3">
-                <input style={{ display: 'none' }} type="file" id="selectFiles" accept="application/json"
-                  onChange={(e) => importCharacterFromFile(e)} />
-                <button className="btn btn-dark" onClick={() => document.getElementById("selectFiles")?.click()}>
+                <button disabled={loading} className="btn btn-success" onClick={() => clearCharacter()}>
+                  Create a new sheet
+                </button>
+                <input disabled={loading} style={{ display: 'none' }} type="file" id="selectFiles"
+                  accept="application/json" onChange={(e) => importCharacterFromFile(e)} />
+                <button disabled={loading} className="btn btn-primary"
+                  onClick={() => document.getElementById("selectFiles")?.click()}>
                   Import
                 </button>
-                <button className="btn btn-dark" onClick={() => exportCharacter()}>Export</button>
-                <button className="btn btn-dark" onClick={() => window.print()}>Print</button>
-                <button className="btn btn-danger" onClick={() => clearCharacter()}>Clear</button>
+                <button disabled={loading} className="btn btn-primary" onClick={() => exportCharacterIntoFile()}>
+                  Export
+                </button>
+                <button disabled={loading} className="btn btn-primary" onClick={() => saveCharacterInDatabase()}>
+                  Save sheet in database
+                </button>
+                <button disabled={loading} className="btn btn-light" onClick={() => window.print()}>
+                  Print
+                </button>
               </li>
             </ul>
           </div>
@@ -202,36 +198,47 @@ const App = (props: any) => {
       </nav>
       <div className="app-holder">
 
-        {!loading &&
-          <Switch>
-            <Route exact path="/">
-              <ScrollToTop />
-              <Redirect to={getDefaultRedirect(search)} />
-            </Route>
-            <Route exact path="/all">
-              <ScrollToTop />
-              {statsSheet}
-              <div className="page-break" />
-              <div className="page-space" />
-              {profileSheet}
-              <div className="page-break" />
-              <div className="page-space" />
-              {spellSheet}
-            </Route>
-            <Route exact path="/stats">
-              <ScrollToTop />
-              {statsSheet}
-            </Route>
-            <Route exact path="/profile">
-              <ScrollToTop />
-              {profileSheet}
-            </Route>
-            <Route exact path="/spells">
-              <ScrollToTop />
-              {spellSheet}
-            </Route>
-          </Switch>
+        {loading &&
+          <div className="overlay">
+            <div className="popup-spinner">
+              <div className="d-flex justify-content-center align-items-center">
+                <div className="spinner-border text-dark" role="status"
+                  style={{ width: '4rem', height: '4rem', zIndex: 20 }}>
+                  <span className="sr-only">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
         }
+
+        <Switch>
+          <Route exact path="/">
+            <ScrollToTop />
+            <Redirect to={getDefaultRedirect()} />
+          </Route>
+          <Route exact path="/all">
+            <ScrollToTop />
+            {statsSheet}
+            <div className="page-break" />
+            <div className="page-space" />
+            {profileSheet}
+            <div className="page-break" />
+            <div className="page-space" />
+            {spellSheet}
+          </Route>
+          <Route exact path="/stats">
+            <ScrollToTop />
+            {statsSheet}
+          </Route>
+          <Route exact path="/profile">
+            <ScrollToTop />
+            {profileSheet}
+          </Route>
+          <Route exact path="/spells">
+            <ScrollToTop />
+            {spellSheet}
+          </Route>
+        </Switch>
 
       </div>
       <footer className="no-print page-footer font-small text-white pt-4"

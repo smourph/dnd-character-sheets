@@ -5,6 +5,9 @@
 # ignore the entire intelliJ folder
 .idea/
 
+# Auto generated configuration file
+src/config.ts
+
 ##################################
 ##       www.gitignore.io       ##
 ##################################
