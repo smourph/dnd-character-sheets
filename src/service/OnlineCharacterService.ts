@@ -32,4 +32,22 @@ export default class OnlineCharacterService implements CharacterServiceInterface
       })
     );
   }
+
+  update(character: CustomDnDCharacter): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (character.id && character.id !== '') {
+        this.db.update(character.id, character, (error: Error, _result: PromiseLike<CustomDnDCharacter> | CustomDnDCharacter, _id: string) => {
+          console.log('error', error);
+          console.log('_result', _result);
+          console.log('_id', _id);
+          if (error) {
+            return reject(error);
+          }
+          resolve();
+        });
+      } else {
+        return reject('Character ID is mandatory, null, empty or undefined given');
+      }
+    });
+  };
 }

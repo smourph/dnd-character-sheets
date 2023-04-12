@@ -142,14 +142,19 @@ const App = (props: any) => {
 
   function saveCharacterInDatabase() {
     setLoading(true);
-    characterService.add(character)
-      .then(id => {
-        character.id = id;
-        updateCharacter(character);
-      })
-      .catch(error => {
-        console.log('Failed to save character in database');
-        console.log(error);
+    characterService.update(character)
+      .catch(() => {
+        setLoading(true);
+        characterService.add(character)
+          .then(id => {
+            character.id = id;
+            updateCharacter(character);
+          })
+          .catch(error => {
+            console.log('Failed to save character in database');
+            console.log(error);
+          })
+          .finally(() => setLoading(false));
       })
       .finally(() => setLoading(false));
   }
