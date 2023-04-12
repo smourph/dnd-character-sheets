@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/dnd-character-sheets/static/css/main.c01a85db.css",
-    "main.js": "/dnd-character-sheets/static/js/main.e2274fa2.js",
+    "main.js": "/dnd-character-sheets/static/js/main.36cfd1d3.js",
     "index.html": "/dnd-character-sheets/index.html",
     "main.c01a85db.css.map": "/dnd-character-sheets/static/css/main.c01a85db.css.map",
-    "main.e2274fa2.js.map": "/dnd-character-sheets/static/js/main.e2274fa2.js.map"
+    "main.36cfd1d3.js.map": "/dnd-character-sheets/static/js/main.36cfd1d3.js.map"
   },
   "entrypoints": [
     "static/css/main.c01a85db.css",
-    "static/js/main.e2274fa2.js"
+    "static/js/main.36cfd1d3.js"
   ]
 }
