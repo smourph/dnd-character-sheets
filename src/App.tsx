@@ -73,19 +73,6 @@ const App = (props: any) => {
     localStorage.setItem('dnd-character-data', JSON.stringify(character_));
   }
 
-  function loadCharacterFromJson(json: string) {
-    try {
-      const result = JSON.parse(json);
-      if (!Array.isArray(result) && typeof result === 'object') {
-        updateCharacter(result);
-      } else {
-        window.alert('Json file does not contain a DnD character.');
-      }
-    } catch {
-      window.alert('Json file does not contain a DnD character.');
-    }
-  }
-
   function loadCharacterFromDatabase(event: React.ChangeEvent<HTMLSelectElement>) {
     const id = event.target.value;
     if (id && id !== '') {
@@ -93,21 +80,6 @@ const App = (props: any) => {
       if (foundCharacter) {
         updateCharacter(foundCharacter);
       }
-    }
-  }
-
-  function importCharacterFromFile(event: any) {
-    if (event.target.files.length > 0) {
-      const fr = new FileReader();
-
-      fr.onload = function (e) {
-        if (e.target && e.target.result && typeof e.target.result === 'string') {
-          loadCharacterFromJson(e.target.result);
-        }
-      };
-
-      fr.readAsText(event.target.files[0]);
-      event.target.value = '';
     }
   }
 
@@ -157,16 +129,6 @@ const App = (props: any) => {
           .finally(() => setLoading(false));
       })
       .finally(() => setLoading(false));
-  }
-
-  function exportCharacterIntoFile() {
-    const json = JSON.stringify(character, null, 2);
-
-    const a = document.createElement('a');
-    const file = new Blob([json], { type: 'application/json' });
-    a.href = URL.createObjectURL(file);
-    a.download = character.name ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json' : 'dnd-character.json';
-    a.click();
   }
 
   function getDefaultRedirect() {
@@ -224,15 +186,6 @@ const App = (props: any) => {
               <li className="nav-item mr-lg-3">
                 <button disabled={loading} className="btn btn-success" onClick={() => clearCharacter()}>
                   Create a new sheet
-                </button>
-                <input disabled={loading} style={{ display: 'none' }} type="file" id="selectFiles"
-                  accept="application/json" onChange={(e) => importCharacterFromFile(e)} />
-                <button disabled={loading} className="btn btn-primary"
-                  onClick={() => document.getElementById("selectFiles")?.click()}>
-                  Import
-                </button>
-                <button disabled={loading} className="btn btn-primary" onClick={() => exportCharacterIntoFile()}>
-                  Export
                 </button>
                 <button disabled={loading} className="btn btn-primary" onClick={() => importCharactersFromDatabase()}>
                   {importedCharacters.length > 0 ? 'Refresh database' : 'Import sheets from online database'}
